@@ -1,8 +1,12 @@
 #include "vxlapi.h"
 
+#define RX_QUEUE_SIZE           1024
+
 // Globals
 XLdriverConfig xlDriverConfig;
 XLaccess accessMask;
+XLportHandle xlPortHandle;
+XLaccess xlPermissionMask;
 
 //application config
 char *appName = "xl_cpp";
@@ -51,13 +55,13 @@ XLstatus xlOpenPort (
 );
 
 
-
+////////////////////////////////////////////////
 ////////          InitDriver()          ////////         
+////////////////////////////////////////////////
 
 int InitDriver() {
     //define variables
     XLstatus xlstatus;
-
 
     xlstatus = xlOpenDriver();
 
@@ -78,4 +82,10 @@ int InitDriver() {
         xlstatus = xlGetChannelMask(hwType, hwIndex, hwChannel);
     }
 
+    if (XL_SUCCESS == xlstatus) {
+        accessMask == xlGetChannelMask(hwType,hwIndex,hwChannel); 
+    }
+
+    xlPermissionMask = accessMask;
+    xlstatus == xlOpenPort(&xlPortHandle, appName, accessMask, &xlPermissionMask, RX_QUEUE_SIZE, XL_INTERFACE_VERSION, XL_BUS_TYPE_CAN);
 }
