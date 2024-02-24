@@ -1,8 +1,9 @@
+#include <Windows.h>
 #include <stdio.h>
-#include "vxlapi.h"
+
+#include "bin\vxlapi.h"
 
 #define RX_QUEUE_SIZE           1024
-
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Globals
@@ -16,7 +17,7 @@ XLaccess xlPermissionMask;
 ////////////////////////////////////////////////////////////////////////////////////////
 // Application config variables
 
-char *appName = "xl_cpp";
+char appName[] = "vxl_CAN_cpp";
 unsigned int hwType;
 unsigned int hwIndex;
 unsigned int hwChannel;
@@ -58,4 +59,46 @@ XLstatus InitDriver() {
     xlstatus == xlOpenPort(&xlPortHandle, appName, accessMask, &xlPermissionMask, RX_QUEUE_SIZE, XL_INTERFACE_VERSION, XL_BUS_TYPE_CAN);
 
     return xlstatus;
+}
+
+
+// OPTIONAL: FlipChannelOutput() flips ACK on or off
+XLstatus FlipChannelOutputMode(int outputMode) {
+    XLstatus xlstatus;
+
+    // Set to normal mode (ACK ON)
+    if (outputMode != XL_OUTPUT_MODE_NORMAL) {
+        xlstatus = xlCanSetChannelOutput(xlPortHandle, accessMask, XL_OUTPUT_MODE_NORMAL);
+    }
+    if (xlstatus == XL_SUCCESS && outputMode != XL_OUTPUT_MODE_SILENT) {
+        xlstatus = xlCanSetChannelOutput(xlPortHandle, accessMask, XL_OUTPUT_MODE_SILENT);
+    }
+
+    return xlstatus;
+}
+
+
+// OPTIONAL: Activate the channel and reset internal clock
+XLstatus StartStopChannel() {
+    XLstatus xlstatus;
+
+    xlstatus = xlActivateChannel(xlPortHandle, accessMask, XL_BUS_TYPE_CAN, XL_ACTIVATE_NONE);
+    
+    return xlstatus;
+}
+
+
+int main() {
+
+    // XLstatus xlstatus;
+    // int startStop;
+
+    // int outputMode = XL_OUTPUT_MODE_NORMAL;
+
+    // xlstatus = InitDriver();
+
+    // if (xlstatus == XL_SUCCESS) {
+    //     xlstatus = xlActivateChannel(xlPortHandle, accessMask, XL_BUS_TYPE_CAN, XL_ACTIVATE_RESET_CLOCK);
+    // }
+
 }
