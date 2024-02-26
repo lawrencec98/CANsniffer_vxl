@@ -1,5 +1,6 @@
 #include <Windows.h>
-#include <stdio.h>
+#include <iostream>
+#include <string>
 
 #include "bin\vxlapi.h"
 
@@ -26,6 +27,7 @@ unsigned int hwChannel;
 ////////////////////////////////////////////////
 ////              InitDriver()              ////         
 ////////////////////////////////////////////////
+// Opens and configures driver and application
 
 XLstatus InitDriver() {
 
@@ -33,10 +35,12 @@ XLstatus InitDriver() {
 
     // Open Driver 
     xlstatus = xlOpenDriver();
+    std::cout << "xlOpenDriver\n";
 
     // Get hardware configuration
     if (XL_SUCCESS == xlstatus) {
         xlstatus = xlGetDriverConfig(&xlDriverConfig);
+        std::cout << "xlGetDriverConfig\n";
     }
 
     // Get application configuration
@@ -45,24 +49,28 @@ XLstatus InitDriver() {
         || xlGetApplConfig(appName, 1, &hwType, &hwIndex, &hwChannel, XL_BUS_TYPE_CAN) != XL_SUCCESS) {
 
             xlstatus = xlSetApplConfig(appName, 0, XL_HWTYPE_VN1630, hwIndex, hwChannel, XL_BUS_TYPE_CAN);
-            xlstatus = xlSetApplConfig(appName, 1, XL_HWTYPE_VN1630, hwIndex, hwChannel, XL_BUS_TYPE_CAN);        
+            xlstatus = xlSetApplConfig(appName, 1, XL_HWTYPE_VN1630, hwIndex, hwChannel, XL_BUS_TYPE_CAN);
+            std::cout << "xlSetApplConfig\n";        
         }
     }
 
     // Get channel mask 
     if (XL_SUCCESS == xlstatus) {
-        accessMask == xlGetChannelMask(hwType,hwIndex,hwChannel); 
+        accessMask == xlGetChannelMask(hwType,hwIndex,hwChannel);
+        std::cout << "xlGetChannelMask\n";
     }
 
     // Open Port
     xlPermissionMask = accessMask;
-    xlstatus == xlOpenPort(&xlPortHandle, appName, accessMask, &xlPermissionMask, RX_QUEUE_SIZE, XL_INTERFACE_VERSION, XL_BUS_TYPE_CAN);
-
+    if (XL_SUCCESS == xlstatus) {
+        xlstatus == xlOpenPort(&xlPortHandle, appName, accessMask, &xlPermissionMask, RX_QUEUE_SIZE, XL_INTERFACE_VERSION, XL_BUS_TYPE_CAN);
+        std::cout << "xlOpenPort\n";
+    }
     return xlstatus;
 }
 
 
-// OPTIONAL: FlipChannelOutput() flips ACK on or off
+// USER CONTROL: FlipChannelOutput() flips ACK on or off
 XLstatus FlipChannelOutputMode(int outputMode) {
     XLstatus xlstatus;
 
@@ -70,7 +78,7 @@ XLstatus FlipChannelOutputMode(int outputMode) {
     if (outputMode != XL_OUTPUT_MODE_NORMAL) {
         xlstatus = xlCanSetChannelOutput(xlPortHandle, accessMask, XL_OUTPUT_MODE_NORMAL);
     }
-    if (xlstatus == XL_SUCCESS && outputMode != XL_OUTPUT_MODE_SILENT) {
+    if (XL_SUCCESS == xlstatus && outputMode != XL_OUTPUT_MODE_SILENT) {
         xlstatus = xlCanSetChannelOutput(xlPortHandle, accessMask, XL_OUTPUT_MODE_SILENT);
     }
 
@@ -78,27 +86,30 @@ XLstatus FlipChannelOutputMode(int outputMode) {
 }
 
 
-// OPTIONAL: Activate the channel and reset internal clock
-XLstatus StartStopChannel() {
+// USER CONTROL: StartStopChannel() activates and deactivates channel
+XLstatus StartStopChannel(int fChannelActivated) {
     XLstatus xlstatus;
 
-    xlstatus = xlActivateChannel(xlPortHandle, accessMask, XL_BUS_TYPE_CAN, XL_ACTIVATE_NONE);
-    
+    if (fChannelActivated) {
+        xlstatus = xlDeactivateChannel(xlPortHandle, accessMask);
+    }
+    else {
+        xlstatus = xlActivateChannel(xlPortHandle, accessMask, XL_BUS_TYPE_CAN, XL_ACTIVATE_NONE);
+    }
     return xlstatus;
 }
 
 
 int main() {
 
-    // XLstatus xlstatus;
-    // int startStop;
+    XLstatus xlstatus;
+    int fChannelActivated;
+    int outputMode = XL_OUTPUT_MODE_NORMAL;
 
-    // int outputMode = XL_OUTPUT_MODE_NORMAL;
+    xlstatus = InitDriver();
 
-    // xlstatus = InitDriver();
-
-    // if (xlstatus == XL_SUCCESS) {
-    //     xlstatus = xlActivateChannel(xlPortHandle, accessMask, XL_BUS_TYPE_CAN, XL_ACTIVATE_RESET_CLOCK);
-    // }
+    if (XL_SUCCESS == xlstatus) {
+        xlstatus = xlActivateChannel(xlPortHandle, accessMask, XL_BUS_TYPE_CAN,XL_ACTIVATE_RESET_CLOCK);
+    }
 
 }
