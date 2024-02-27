@@ -1,6 +1,6 @@
-// to compile and link:  
-// 1. g++ -c main.cpp -o main.o -Ibin (Compile main.cpp to an object file and include the bin directory for header files)
-// 2. g++ main.o -o main -Lbin -lvxlapi (Link main.o with vxlapi.lib to create the executable)
+// to compile and link  (Compile main.cpp to an object file and include the bin directory for header files)
+// 1. g++ -c main.cpp -o main.o -Ibin (# Link main.o with vxlapi.lib to create the executable)
+// 2. g++ main.o -o main -Lbin -lvxlapi
 
 #include <Windows.h>
 #include <iostream>
@@ -22,10 +22,10 @@ XLaccess xlPermissionMask;
 ////////////////////////////////////////////////////////////////////////////////////////
 // Application config variables
 
-char appName[] = "vxlCANcpp";
-unsigned int hwType = XL_HWTYPE_VN1630;
+char appName[] = "vxl_CAN_cpp";
+unsigned int hwType = 0;
 unsigned int hwIndex = 0;
-unsigned int hwChannel = 2;
+unsigned int hwChannel = 0;
 unsigned int appChannel = 0;
 unsigned int busType = XL_BUS_TYPE_CAN;
 
@@ -41,51 +41,36 @@ XLstatus InitDriver() {
 
     // Open Driver 
     xlstatus = xlOpenDriver();
-    std::cout << "xlOpenDriver status: " << xlstatus << '\n';
-    if (XL_SUCCESS != xlstatus) {
-        std::cout << "Error opening driver!\n";
-        return xlstatus;
-    }
+    std::cout << "xlOpenDriver\n";
 
     // Get hardware configuration
     if (XL_SUCCESS == xlstatus) {
         xlstatus = xlGetDriverConfig(&xlDriverConfig);
-        std::cout << "xlGetDriverConfig status: " << xlstatus << '\n';
-        if (XL_SUCCESS != xlstatus) {
-            std::cout << "Error getting driver config!\n";
-            return xlstatus;
-        }
+        std::cout << "xlGetDriverConfig\n";
     }
 
     // Get application configuration
     if (XL_SUCCESS == xlstatus) {
-        xlstatus = xlSetApplConfig(appName, appChannel, hwType, hwIndex, hwChannel, busType);
-        std::cout << "xlSetApplConfig status: " << xlstatus << '\n';
-        if (XL_SUCCESS != xlstatus) {
-            std::cout << "Error setting application config!\n";
-            return xlstatus;
+        if (xlGetApplConfig(appName, appChannel, &hwType, &hwIndex, &hwChannel, busType) != XL_SUCCESS
+        || xlGetApplConfig(appName, appChannel, &hwType, &hwIndex, &hwChannel, busType) != XL_SUCCESS) {
+
+            xlstatus = xlSetApplConfig(appName, appChannel, hwType, hwIndex, hwChannel, busType);
+            xlstatus = xlSetApplConfig(appName, appChannel, hwType, hwIndex, hwChannel, busType);
+            std::cout << "xlSetApplConfig\n";        
         }
     }
 
     // Get channel mask 
     if (XL_SUCCESS == xlstatus) {
         accessMask == xlGetChannelMask(hwType,hwIndex,hwChannel);
-        std::cout << "xlGetChannelMask status:\n";
-        std::cout << "\thwType: " << hwType << '\n';
-        std::cout << "\thwIndex: " << hwIndex << '\n';
-        std::cout << "\thwChannel: " << hwChannel << '\n';
-        std::cout << "\taccessMask: " << accessMask << '\n'; 
+        std::cout << "xlGetChannelMask\n";
     }
 
     // Open Port
     xlPermissionMask = accessMask;
     if (XL_SUCCESS == xlstatus) {
         xlstatus == xlOpenPort(&xlPortHandle, appName, accessMask, &xlPermissionMask, RX_QUEUE_SIZE, XL_INTERFACE_VERSION, busType);
-        std::cout << "xlOpenPort status: " << xlstatus << '\n';
-        if (XL_SUCCESS != xlstatus) {
-            std::cout << "Error opening port!\n";
-            return xlstatus;
-        }
+        std::cout << "xlOpenPort\n";
     }
     return xlstatus;
 }
@@ -121,32 +106,6 @@ XLstatus StartStopChannel(int& fChannelActivated) {
 }
 
 
-XLstatus ReadRXMessages() {
-
-    XLhandle xlHandle;
-    XLstatus xlstatus;
-    XLevent xlEvent;
-    unsigned int xlEventCount = 1;
-    bool RXThreadRun;
-
-    while (RXThreadRun) {
-
-        WaitForSingleObject(xlHandle, 10);
-        xlstatus == XL_SUCCESS;
-
-        while(!xlstatus) {
-            xlEventCount = 1;
-            xlstatus = xlReceive(xlPortHandle, &xlEventCount, &xlEvent);
-
-            if (xlstatus != XL_ERR_QUEUE_IS_EMPTY) {
-                std::string eventString = xlGetEventString(&xlEvent);
-                std::cout << eventString << '\n';
-            }
-        }
-    }
-}
-
-
 int main() {
 
     XLstatus xlstatus;
@@ -154,16 +113,9 @@ int main() {
     int outputMode = XL_OUTPUT_MODE_NORMAL;
 
     xlstatus = InitDriver();
-    xlCanSetChannelBitrate(xlPortHandle, accessMask, 500000);
 
     if (XL_SUCCESS == xlstatus) {
         xlstatus = xlActivateChannel(xlPortHandle, accessMask, busType,XL_ACTIVATE_RESET_CLOCK);
         if (XL_SUCCESS == xlstatus) fChannelActivated = 1;
-    }
-
-    while(fChannelActivated) {
-        if (XL_SUCCESS == xlstatus) {
-            xlstatus = ReadRXMessages();
-        }
     }
 }
