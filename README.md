@@ -6,4 +6,7 @@ Writing a CLI program that allows user to sniff broadcast CAN traffic in a vehic
 Topics:
 - Device Drivers
 - C / C++
-- Libraries
+- CAN bus communication
+- Hardware interaction
+- Embedded systems programming
+- CLI Development
