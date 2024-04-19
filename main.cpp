@@ -140,7 +140,6 @@ XLstatus ReadRXMessages() {
 
             if (xlstatus != XL_ERR_QUEUE_IS_EMPTY) {
                 std::string eventString = xlGetEventString(&xlEvent);
-                std::cout << eventString << '\n';
             }
         }
     }
