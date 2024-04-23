@@ -1,5 +1,4 @@
-#include "bin/vxlapi.h"
-#include "application_config.h"
+#include "application_class.h"
 
 /*
 The process for initializing the driver is:
@@ -15,8 +14,11 @@ The process for initializing the driver is:
 
 
 #define RX_QUEUE_SIZE 1024
-#define HW_TYPE XL_HWTYPE_VN1630
-#define BUS_TYPE XL_BUS_TYPE_CAN
+#define APP_CHANNEL 0
+#define HW_INDEX 0
+#define HW_CHANNEL 2
+#define HW_TYPE     XL_HWTYPE_VN1630
+#define BUS_TYPE    XL_BUS_TYPE_CAN
 
 
 XLdriverConfig xlDriverConfig;
@@ -31,7 +33,7 @@ XLstatus InitDriver() {
     xlOpenDriver();
     xlGetDriverConfig(&xlDriverConfig);
 
-    Application myApp("CANSniffer_App", 0, HW_TYPE, 0, 2, BUS_TYPE);
+    Application myApp("CANSniffer_App", APP_CHANNEL, HW_TYPE, HW_INDEX, HW_CHANNEL, BUS_TYPE);
     myApp.SetAppConfig();
     
 
