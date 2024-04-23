@@ -1,35 +1,40 @@
-// Hardcoded Application paramters
-char appName[] = "CANsniffer_app";
-unsigned int hwType = XL_HWTYPE_VN1630;
-unsigned int hwIndex = 0;
-unsigned int hwChannel = 3;
-unsigned int appChannel = 0;
-unsigned int busType = XL_BUS_TYPE_CAN;
 
 // Application class
 class Application {
 
 public:
-    XLstatus xlGetApplConfig();
-    XLstatus xlSetApplConfig();
+    XLstatus GetAppConfig();
+    XLstatus SetAppConfig();
     Application(char *appName, unsigned int appChannel,
-                unsigned int *pHwType,
-                unsigned int *pHwIndex,
-                unsigned int *pHwChannel,
+                unsigned int hwType,
+                unsigned int hwIndex,
+                unsigned int hwChannel,
                 unsigned int busType) 
                 
                 : appName(appName),
                 appChannel(appChannel),
-                pHwType(pHwType),
-                pHwIndex(pHwIndex),
-                pHwChannel(pHwChannel),
+                hwType(hwType),
+                hwIndex(hwIndex),
+                hwChannel(hwChannel),
                 busType(busType) {};
+
+    char * get_appName() {return appName;}
+    unsigned int get_appChannel() {return appChannel;}
+    unsigned int get_hwType() {return hwType;}
+    unsigned int get_hwIndex() {return hwIndex;}
+    unsigned int get_hwChannel() {return hwChannel;}
+    unsigned int get_busType() {return busType;}
 
 private:
     char *appName;
     unsigned int appChannel;
-    unsigned int *pHwType;
-    unsigned int *pHwIndex;
-    unsigned int *pHwChannel;
+    unsigned int hwType;
+    unsigned int hwIndex;
+    unsigned int hwChannel;
     unsigned int busType;
 };
+
+
+XLstatus Application::SetAppConfig() {
+    return xlSetApplConfig(appName, appChannel, hwType, hwIndex, hwChannel, busType);
+}

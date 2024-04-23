@@ -13,7 +13,11 @@ The process for initializing the driver is:
     xlOpenPort()
 */
 
+
 #define RX_QUEUE_SIZE 1024
+#define HW_TYPE XL_HWTYPE_VN1630
+#define BUS_TYPE XL_BUS_TYPE_CAN
+
 
 XLdriverConfig xlDriverConfig;
 XLportHandle xlPortHandle;
@@ -27,10 +31,10 @@ XLstatus InitDriver() {
     xlOpenDriver();
     xlGetDriverConfig(&xlDriverConfig);
 
-    if(xlGetApplConfig(appName, appChannel, &hwType, &hwIndex, &hwChannel, busType)) {
-        xlSetApplConfig(appName, appChannel, hwType, hwIndex, hwChannel, busType);
-    }
+    Application myApp("CANSniffer_App", 0, HW_TYPE, 0, 2, BUS_TYPE);
+    myApp.SetAppConfig();
+    
 
-    accessMask = (hwType, hwIndex, hwChannel);
-    xlOpenPort(&xlPortHandle, appName, accessMask, &permissionMask, RX_QUEUE_SIZE, XL_INTERFACE_VERSION, busType);
+    accessMask = (myApp.get_hwType(), myApp.get_hwIndex(), myApp.get_hwChannel());
+    xlOpenPort(&xlPortHandle, myApp.get_appName(), accessMask, &permissionMask, RX_QUEUE_SIZE, XL_INTERFACE_VERSION, myApp.get_busType());
 }

@@ -10,31 +10,6 @@
 #include "driver_init.cpp"
 
 
-XLstatus ReadRXMessages() {
-
-    XLhandle xlHandle;
-    XLstatus xlstatus;
-    XLevent xlEvent;
-    unsigned int xlEventCount = 1;
-    bool RXThreadRun;
-
-    while (RXThreadRun) {
-
-        WaitForSingleObject(xlHandle, 10);
-        xlstatus == XL_SUCCESS;
-
-        while(!xlstatus) {
-            xlEventCount = 1;
-            xlstatus = xlReceive(xlPortHandle, &xlEventCount, &xlEvent);
-
-            if (xlstatus != XL_ERR_QUEUE_IS_EMPTY) {
-                std::string eventString = xlGetEventString(&xlEvent);
-            }
-        }
-    }
-}
-
-
 int main() {
 
     XLstatus xlstatus;
