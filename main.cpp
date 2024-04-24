@@ -6,8 +6,10 @@
 #include <iostream>
 #include <string>
 
+
 #include "bin\vxlapi.h"
-#include "driver_init.cpp"
+#include "driver_init.h"
+#include "channel_setup.h"
 
 
 int main() {
@@ -15,7 +17,6 @@ int main() {
     XLstatus xlstatus;
 
     InitDriver();
-    xlCanSetChannelBitrate(xlPortHandle, accessMask, 500000);
+    SetupChannel();
 
-    
 }

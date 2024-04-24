@@ -1,3 +1,23 @@
+#ifndef DRIVER_INIT_H
+#define DRIVER_INIT_H
+
+#include "bin/vxlapi.h"
+
+
+#define RX_QUEUE_SIZE 1024
+#define APP_CHANNEL 0
+#define HW_INDEX 0
+#define HW_CHANNEL 2
+#define HW_TYPE     XL_HWTYPE_VN1630
+#define BUS_TYPE    XL_BUS_TYPE_CAN
+
+
+XLdriverConfig xlDriverConfig;
+XLportHandle xlPortHandle;
+XLaccess accessMask;
+XLaccess permissionMask;
+
+
 // Application class
 class Application {
 
@@ -37,3 +57,7 @@ private:
 XLstatus Application::SetAppConfig() {
     return xlSetApplConfig(appName, appChannel, hwType, hwIndex, hwChannel, busType);
 }
+
+
+XLstatus InitDriver();
+#endif

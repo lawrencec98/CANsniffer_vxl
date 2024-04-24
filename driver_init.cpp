@@ -1,4 +1,5 @@
-#include "application_class.h"
+#include "bin/vxlapi.h"
+#include "driver_init.h"
 
 /*
 The process for initializing the driver is:
@@ -11,20 +12,6 @@ The process for initializing the driver is:
     xlGetChannelMask()
     xlOpenPort()
 */
-
-
-#define RX_QUEUE_SIZE 1024
-#define APP_CHANNEL 0
-#define HW_INDEX 0
-#define HW_CHANNEL 2
-#define HW_TYPE     XL_HWTYPE_VN1630
-#define BUS_TYPE    XL_BUS_TYPE_CAN
-
-
-XLdriverConfig xlDriverConfig;
-XLportHandle xlPortHandle;
-XLaccess accessMask;
-XLaccess permissionMask;
 
 
 XLstatus InitDriver() {
