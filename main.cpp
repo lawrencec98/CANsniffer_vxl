@@ -7,7 +7,6 @@
 #include <string>
 
 
-#include "bin\vxlapi.h"
 #include "driver_init.h"
 #include "channel_setup.h"
 

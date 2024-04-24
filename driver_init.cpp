@@ -1,4 +1,3 @@
-#include "bin/vxlapi.h"
 #include "driver_init.h"
 
 /*
