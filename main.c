@@ -7,10 +7,12 @@
 #include <stdio.h>
 // third-party includes
 #include "bin\vxlapi.h"
+// personal libraries
 
 #define RX_QUEUE_SIZE 1024
 #define HW_TYPE     XL_HWTYPE_VN1630
 #define BUS_TYPE    XL_BUS_TYPE_CAN
+#define QUEUE_LEVEL 1
 
 // global variables
 char *appName = "CANSniffer_App";
@@ -19,15 +21,16 @@ unsigned int hwIndex = 0;
 unsigned int hwChannel = 2;
 unsigned int channelIndex;
 unsigned int channelMask;
+unsigned long baudrate = 500000;
 
 XLdriverConfig g_driverConfig;
 XLportHandle g_portHandle;
 XLaccess g_accessMask;
 XLaccess g_permissionMask;
+XLhandle g_handle;
 
 
 XLstatus InitDriver() {
-
     xlOpenDriver();
     xlGetDriverConfig(&g_driverConfig);
     xlSetApplConfig(appName, appChannel, HW_TYPE, hwIndex, hwChannel, BUS_TYPE);
@@ -42,6 +45,15 @@ XLstatus InitDriver() {
 }
 
 
+XLstatus ChannelSetup() {
+    xlCanSetChannelBitrate(g_portHandle, g_accessMask, baudrate);
+
+    xlSetNotification(g_portHandle, &g_handle, QUEUE_LEVEL);
+
+    return xlActivateChannel(g_portHandle, g_accessMask, BUS_TYPE, XL_ACTIVATE_RESET_CLOCK);
+}
+
+
 void printVariables() {
     printf("g_driverConfig = %d\n", g_driverConfig);
     printf("g_portHandle = %d\n", g_portHandle);
@@ -53,12 +65,12 @@ void printVariables() {
 
 
 int main() {
-
     XLstatus xlstatus;
 
     xlstatus = InitDriver();
     printf("InitDriverStatus = %d\n", xlstatus);
-    xlCanSetChannelBitrate(g_portHandle, g_accessMask, 500000);
+    printVariables();
 
-    
+    xlstatus = ChannelSetup();
+    printf("ChannelSetup = %d\n", xlstatus);
 }
