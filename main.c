@@ -13,6 +13,7 @@
 #define HW_TYPE     XL_HWTYPE_VN1630
 #define BUS_TYPE    XL_BUS_TYPE_CAN
 #define QUEUE_LEVEL 1
+#define TIMER_RATE 100
 
 // global variables
 char *appName = "CANSniffer_App";
@@ -25,42 +26,75 @@ unsigned long baudrate = 500000;
 
 XLdriverConfig g_driverConfig;
 XLportHandle g_portHandle;
-XLaccess g_accessMask;
+XLaccess g_accessMask = 0x04;
 XLaccess g_permissionMask;
-XLhandle g_handle;
+XLhandle g_threadHandle;
+XLhandle g_msgEvent;
 
 
 XLstatus InitDriver() {
-    xlOpenDriver();
-    xlGetDriverConfig(&g_driverConfig);
+    XLstatus xlstatus;
+
+    xlOpenDriver(); 
     xlSetApplConfig(appName, appChannel, HW_TYPE, hwIndex, hwChannel, BUS_TYPE);
+    // xlGetDriverConfig(&g_driverConfig);
     
-    channelIndex = xlGetChannelIndex(HW_TYPE, hwIndex, hwChannel);
+    // channelIndex = xlGetChannelIndex(HW_TYPE, hwIndex, hwChannel);
     
     channelMask = xlGetChannelMask(HW_TYPE, hwIndex, hwChannel);
     g_accessMask = channelMask; // only works if ONE channel only, will break if more than one.
     
-    return xlOpenPort(&g_portHandle, appName, g_accessMask, &g_permissionMask, RX_QUEUE_SIZE, XL_INTERFACE_VERSION, BUS_TYPE);
-    
+    xlstatus = xlOpenPort(&g_portHandle, appName, g_accessMask, &g_permissionMask, RX_QUEUE_SIZE, XL_INTERFACE_VERSION, BUS_TYPE);
+    if (g_portHandle == XL_INVALID_PORTHANDLE) {
+        printf("INVALID PORTHANDLE: %d\n", g_portHandle);
+    }
+    if (xlstatus != XL_SUCCESS) {
+        printf("InitDriver() could not open port\n");
+    }
 }
 
 
-XLstatus ChannelSetup() {
+XLstatus OnBus() {
+
+    xlResetClock(g_portHandle);
+    xlSetTimerRate(g_portHandle, TIMER_RATE);
     xlCanSetChannelBitrate(g_portHandle, g_accessMask, baudrate);
 
-    xlSetNotification(g_portHandle, &g_handle, QUEUE_LEVEL);
-
-    return xlActivateChannel(g_portHandle, g_accessMask, BUS_TYPE, XL_ACTIVATE_RESET_CLOCK);
 }
 
 
-void printVariables() {
-    printf("g_driverConfig = %d\n", g_driverConfig);
-    printf("g_portHandle = %d\n", g_portHandle);
-    printf("g_accessMask = %d\n", g_accessMask);
-    printf("g_permissionMask = %d\n", g_permissionMask);
+DWORD WINAPI RxThread(LPVOID par) {
+    XLstatus xlstatus;
+    unsigned int eventcount = QUEUE_LEVEL;
+    XLevent xlEvent;
 
-    return;
+    while(1) {
+        WaitForSingleObject(g_msgEvent,10);
+        xlstatus = XL_SUCCESS;
+        printf("Entered while1 loop RxThread\n");
+
+        while(!xlstatus) {
+            eventcount = QUEUE_LEVEL;
+            xlstatus = xlReceive(g_portHandle, &eventcount, &xlEvent);
+            printf("xlReceive = %d\n", xlstatus);
+            if (xlstatus != XL_ERR_QUEUE_IS_EMPTY) {
+                printf("%s\n", xlGetEventString(&xlEvent));
+            }
+        }
+    }
+}
+
+
+XLstatus CreateRXThread() {
+    XLstatus xlstatus;
+    DWORD ThreadId=0;
+
+    if (g_portHandle != XL_INVALID_PORTHANDLE) {
+        xlstatus = xlSetNotification(g_portHandle, &g_msgEvent, QUEUE_LEVEL);
+        printf("SetNotification = %d\n", xlstatus);
+        CreateThread(0, 0x1000, RxThread, (LPVOID) 0, 0, &ThreadId);
+    }
+    return xlstatus;
 }
 
 
@@ -68,9 +102,14 @@ int main() {
     XLstatus xlstatus;
 
     xlstatus = InitDriver();
-    printf("InitDriverStatus = %d\n", xlstatus);
-    printVariables();
+    printf("InitDriver = %d\n", xlstatus);
 
-    xlstatus = ChannelSetup();
-    printf("ChannelSetup = %d\n", xlstatus);
+    xlstatus = OnBus();
+    printf("OnBus = %d\n", xlstatus);
+
+    xlstatus = CreateRXThread();
+    printf("CreateRXThread = %d\n", xlstatus);
+
+    // xlstatus = xlActivateChannel(g_portHandle, g_accessMask, BUS_TYPE, XL_ACTIVATE_RESET_CLOCK);
+    // printf("ActivateChannel = %d\n", xlstatus);
 }
