@@ -5,6 +5,7 @@
 // system includes
 #include <Windows.h>
 #include <stdio.h>
+#define UNUSED_PARAM(a) { a=a; }
 // third-party includes
 #include "bin\vxlapi.h"
 // personal libraries
@@ -31,6 +32,8 @@ XLaccess g_permissionMask;
 XLhandle g_threadHandle;
 XLhandle g_msgEvent;
 
+HANDLE g_RXthread;
+
 
 XLstatus InitDriver() {
     XLstatus xlstatus;
@@ -55,44 +58,53 @@ XLstatus InitDriver() {
 
 
 XLstatus OnBus() {
+    XLstatus xlstatus;
 
     xlResetClock(g_portHandle);
-    xlSetTimerRate(g_portHandle, TIMER_RATE);
+    xlstatus = xlSetTimerRate(g_portHandle, TIMER_RATE);
     xlCanSetChannelBitrate(g_portHandle, g_accessMask, baudrate);
-
+    return xlstatus;
 }
 
 
 DWORD WINAPI RxThread(LPVOID par) {
-    XLstatus xlstatus;
-    unsigned int eventcount = QUEUE_LEVEL;
-    XLevent xlEvent;
+  XLstatus        xlStatus;
+  
+  unsigned int    msgsrx = QUEUE_LEVEL;
+  XLevent         xlEvent; 
+  
+  UNUSED_PARAM(par); 
+  
 
-    while(1) {
-        WaitForSingleObject(g_msgEvent,10);
-        xlstatus = XL_SUCCESS;
-        printf("Entered while1 loop RxThread\n");
+  while (1) { 
+   
+    WaitForSingleObject(g_msgEvent,10);
 
-        while(!xlstatus) {
-            eventcount = QUEUE_LEVEL;
-            xlstatus = xlReceive(g_portHandle, &eventcount, &xlEvent);
-            printf("xlReceive = %d\n", xlstatus);
-            if (xlstatus != XL_ERR_QUEUE_IS_EMPTY) {
-                printf("%s\n", xlGetEventString(&xlEvent));
-            }
-        }
+    xlStatus = XL_SUCCESS;
+    
+    while (!xlStatus) {
+      
+      msgsrx = QUEUE_LEVEL;
+
+      xlStatus = xlReceive(g_portHandle, &msgsrx, &xlEvent);      
+      if ( xlStatus!=XL_ERR_QUEUE_IS_EMPTY ) {
+        printf("%s\n", xlGetEventString(&xlEvent));
+      }  
     }
+          
+  }
+  return NO_ERROR; 
 }
 
 
 XLstatus CreateRXThread() {
-    XLstatus xlstatus;
+    XLstatus xlstatus = XL_ERROR;
     DWORD ThreadId=0;
 
     if (g_portHandle != XL_INVALID_PORTHANDLE) {
         xlstatus = xlSetNotification(g_portHandle, &g_msgEvent, QUEUE_LEVEL);
         printf("SetNotification = %d\n", xlstatus);
-        CreateThread(0, 0x1000, RxThread, (LPVOID) 0, 0, &ThreadId);
+        g_RXthread = CreateThread(0, 0x1000, RxThread, (LPVOID) 0, 0, &ThreadId);
     }
     return xlstatus;
 }
@@ -110,6 +122,9 @@ int main() {
     xlstatus = CreateRXThread();
     printf("CreateRXThread = %d\n", xlstatus);
 
-    // xlstatus = xlActivateChannel(g_portHandle, g_accessMask, BUS_TYPE, XL_ACTIVATE_RESET_CLOCK);
-    // printf("ActivateChannel = %d\n", xlstatus);
+    xlstatus = OnBus();
+    printf("OnBus = %d\n", xlstatus);
+
+    xlstatus = xlActivateChannel(g_portHandle, g_accessMask, BUS_TYPE, XL_ACTIVATE_RESET_CLOCK);
+    printf("ActivateChannel = %d\n", xlstatus);
 }
